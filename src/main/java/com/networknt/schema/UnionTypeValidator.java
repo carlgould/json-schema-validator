@@ -16,8 +16,8 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonElement;
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,33 +32,37 @@ public class UnionTypeValidator extends BaseJsonValidator implements JsonValidat
     private List<JsonValidator> schemas;
     private String error;
 
-    public UnionTypeValidator(String schemaPath, JsonNode schemaNode, JsonSchema parentSchema, ObjectMapper mapper) {
+    public UnionTypeValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.UNION_TYPE);
         schemas = new ArrayList<JsonValidator>();
         String sep = "";
-        error = "[";
+        StringBuilder error = new StringBuilder();
+        error.append("[");
 
-        if (!schemaNode.isArray())
+        if (!schemaNode.isJsonArray()) {
             throw new JsonSchemaException("Expected array for type property on Union Type Definition.");
+        }
 
         int i = 0;
-        for (JsonNode n : schemaNode) {
+        for (JsonElement n : schemaNode.getAsJsonArray()) {
             JsonType t = TypeFactory.getSchemaNodeType(n);
-            error += sep + t;
+            error.append(sep).append(t);
             sep = ", ";
 
-            if (n.isObject())
+            if (n.isJsonObject()) {
                 schemas.add(new JsonSchema(mapper, ValidatorTypeCode.TYPE.getValue(), n, parentSchema));
-            else
+            } else {
                 schemas.add(new TypeValidator(schemaPath + "/" + i, n, parentSchema, mapper));
+            }
 
             i++;
         }
 
-        error += "]";
+        error.append("]");
+        this.error = error.toString();
     }
 
-    public Set<ValidationMessage> validate(JsonNode node, JsonNode rootNode, String at) {
+    public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
         JsonType nodeType = TypeFactory.getValueNodeType(node);

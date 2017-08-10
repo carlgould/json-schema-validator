@@ -16,64 +16,67 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AdditionalPropertiesValidator extends BaseJsonValidator implements JsonValidator {
     private static final Logger logger = LoggerFactory.getLogger(AdditionalPropertiesValidator.class);
 
     private boolean allowAdditionalProperties;
     private JsonSchema additionalPropertiesSchema;
-    private List<String> allowedProperties;
+    private Set<String> allowedProperties = new HashSet<String>();
     private List<Pattern> patternProperties = new ArrayList<Pattern>();
 
-    public AdditionalPropertiesValidator(String schemaPath, JsonNode schemaNode, JsonSchema parentSchema,
-                                         ObjectMapper mapper) {
+    public AdditionalPropertiesValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema,
+                                         Gson mapper) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.ADDITIONAL_PROPERTIES);
         allowAdditionalProperties = false;
-        if (schemaNode.isBoolean()) {
-            allowAdditionalProperties = schemaNode.booleanValue();
+        if (isBoolean(schemaNode)) {
+            allowAdditionalProperties = schemaNode.getAsJsonPrimitive().getAsBoolean();
         }
-        if (schemaNode.isObject()) {
+        if (schemaNode.isJsonObject()) {
             allowAdditionalProperties = true;
-            additionalPropertiesSchema = new JsonSchema(mapper, getValidatorType().getValue(), schemaNode, parentSchema);
+            additionalPropertiesSchema =
+                new JsonSchema(mapper, getValidatorType().getValue(), schemaNode, parentSchema);
         }
 
-        allowedProperties = new ArrayList<String>();
-        JsonNode propertiesNode = parentSchema.getSchemaNode().get(PropertiesValidator.PROPERTY);
+        JsonObject parentSchemaObj = parentSchema.getSchemaNode().getAsJsonObject();
+
+        JsonElement propertiesNode = parentSchemaObj.get(PropertiesValidator.PROPERTY);
         if (propertiesNode != null) {
-            for (Iterator<String> it = propertiesNode.fieldNames(); it.hasNext(); ) {
-                allowedProperties.add(it.next());
-            }
+            allowedProperties.addAll(propertiesNode.getAsJsonObject().keySet());
         }
 
-        JsonNode patternPropertiesNode = parentSchema.getSchemaNode().get(PatternPropertiesValidator.PROPERTY);
+        JsonElement patternPropertiesNode = parentSchemaObj.get(PatternPropertiesValidator.PROPERTY);
         if (patternPropertiesNode != null) {
-            for (Iterator<String> it = patternPropertiesNode.fieldNames(); it.hasNext(); ) {
-                patternProperties.add(Pattern.compile(it.next()));
+            for (String pattern : patternPropertiesNode.getAsJsonObject().keySet()) {
+                patternProperties.add(Pattern.compile(pattern));
             }
         }
 
         parseErrorCode(getValidatorType().getErrorCodeKey());
     }
 
-    public Set<ValidationMessage> validate(JsonNode node, JsonNode rootNode, String at) {
+    public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         if (logger.isDebugEnabled()) debug(logger, node, rootNode, at);
 
         Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
-        if (!node.isObject()) {
+        if (!node.isJsonObject()) {
             // ignore no object
             return errors;
         }
 
-        for (Iterator<String> it = node.fieldNames(); it.hasNext(); ) {
-            String pname = it.next();
+        for (String pname : node.getAsJsonObject().keySet()) {
             // skip the context items
             if (pname.startsWith("#")) {
                 continue;
@@ -92,7 +95,8 @@ public class AdditionalPropertiesValidator extends BaseJsonValidator implements 
                     errors.add(buildValidationMessage(at, pname));
                 } else {
                     if (additionalPropertiesSchema != null) {
-                        errors.addAll(additionalPropertiesSchema.validate(node.get(pname), rootNode, at + "." + pname));
+                        JsonElement value = node.getAsJsonObject().get(pname);
+                        errors.addAll(additionalPropertiesSchema.validate(value, rootNode, at + "." + pname));
                     }
                 }
             }

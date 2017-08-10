@@ -16,18 +16,23 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URLDecoder;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is the core of json constraint implementation. It parses json constraint
@@ -38,29 +43,29 @@ public class JsonSchema extends BaseJsonValidator {
     private static final Logger logger = LoggerFactory.getLogger(JsonSchema.class);
     private static final Pattern intPattern = Pattern.compile("^[0-9]+$");
     protected Map<String, JsonValidator> validators;
-    private ObjectMapper mapper;
+    private Gson mapper;
 
-    JsonSchema(ObjectMapper mapper, JsonNode schemaNode) {
+    JsonSchema(Gson mapper, JsonElement schemaNode) {
         this(mapper, "#", schemaNode, null);
     }
 
-    JsonSchema(ObjectMapper mapper, String schemaPath, JsonNode schemaNode,
+    JsonSchema(Gson mapper, String schemaPath, JsonElement schemaNode,
                JsonSchema parent) {
         super(schemaPath, schemaNode, parent, null);
         this.init(mapper, schemaNode);
     }
 
-    JsonSchema(ObjectMapper mapper, String schemaPath, JsonNode schemaNode,
+    JsonSchema(Gson mapper, String schemaPath, JsonElement schemaNode,
                JsonSchema parent, JsonSchema subSchema) {
         super(schemaPath, schemaNode, parent, null, subSchema);
         this.init(mapper, schemaNode);
     }
 
-    public JsonSchema(ObjectMapper mapper, JsonNode schemaNode, JsonSchema subSchema) {
+    public JsonSchema(Gson mapper, JsonElement schemaNode, JsonSchema subSchema) {
         this(mapper, "#", schemaNode, null, subSchema);
     }
 
-    private void init(ObjectMapper mapper, JsonNode schemaNode) {
+    private void init(Gson mapper, JsonElement schemaNode) {
         this.mapper = mapper;
         this.validators = new LinkedHashMap<String, JsonValidator>();
         this.read(schemaNode);
@@ -70,11 +75,11 @@ public class JsonSchema extends BaseJsonValidator {
      * Find the schema node for $ref attribute.
      *
      * @param ref String
-     * @return JsonNode
+     * @return JsonElement
      */
-    public JsonNode getRefSchemaNode(String ref) {
+    public JsonElement getRefSchemaNode(String ref) {
         JsonSchema schema = findAncestor();
-        JsonNode node = schema.getSchemaNode();
+        JsonElement node = schema.getSchemaNode();
 
         if (ref.startsWith("#/")) {
             // handle local ref
@@ -86,14 +91,14 @@ public class JsonSchema extends BaseJsonValidator {
                 }
                 Matcher matcher = intPattern.matcher(key);
                 if (matcher.matches()) {
-                    node = node.get(Integer.parseInt(key));
+                    node = node.getAsJsonArray().get(Integer.parseInt(key));
                 } else {
-                    node = node.get(key);
+                    node = node.getAsJsonObject().get(key);
                 }
-                if (node == null && schema.hasSubSchema()){
+                if (node == null && schema.hasSubSchema()) {
                     node = schema.getSubSchema().getRefSchemaNode(ref);
                 }
-                if (node == null){
+                if (node == null) {
                     break;
                 }
             }
@@ -110,11 +115,11 @@ public class JsonSchema extends BaseJsonValidator {
     }
 
     @SuppressWarnings("unchecked")
-    private void read(JsonNode schemaNode) {
-        Iterator<String> pnames = schemaNode.fieldNames();
+    private void read(JsonElement schemaNode) {
+        Iterator<String> pnames = schemaNode.getAsJsonObject().keySet().iterator();
         while (pnames.hasNext()) {
             String pname = pnames.next();
-            JsonNode n = schemaNode.get(pname);
+            JsonElement n = schemaNode.getAsJsonObject().get(pname);
 
             String shortClassName = pname;
             if (shortClassName.startsWith("$")) {
@@ -126,14 +131,14 @@ public class JsonSchema extends BaseJsonValidator {
                 ValidatorTypeCode.fromValue(shortClassName);
 
                 String className = Character.toUpperCase(shortClassName.charAt(0))
-                        + shortClassName.substring(1) + "Validator";
+                    + shortClassName.substring(1) + "Validator";
                 Class<JsonValidator> clazz = (Class<JsonValidator>) Class
-                        .forName("com.networknt.schema." + className);
+                    .forName("com.networknt.schema." + className);
                 Constructor<JsonValidator> c = null;
                 c = clazz.getConstructor(new Class[]{String.class,
-                        JsonNode.class, JsonSchema.class, ObjectMapper.class});
+                    JsonElement.class, JsonSchema.class, Gson.class});
                 validators.put(getSchemaPath() + "/" + pname, c.newInstance(
-                        getSchemaPath() + "/" + pname, n, this, mapper));
+                    getSchemaPath() + "/" + pname, n, this, mapper));
             } catch (IllegalArgumentException e) {
                 // ignore unsupported schema node
             } catch (InvocationTargetException e) {
@@ -148,11 +153,11 @@ public class JsonSchema extends BaseJsonValidator {
         }
     }
 
-    public Set<ValidationMessage> validate(JsonNode JsonNode,
-                                           JsonNode rootNode, String at) {
+    public Set<ValidationMessage> validate(JsonElement JsonElement,
+                                           JsonElement rootNode, String at) {
         Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
         for (JsonValidator v : validators.values()) {
-            errors.addAll(v.validate(JsonNode, rootNode, at));
+            errors.addAll(v.validate(JsonElement, rootNode, at));
         }
         return errors;
     }

@@ -16,8 +16,9 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonElement;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,51 +26,56 @@ import java.util.*;
 
 public class DependenciesValidator extends BaseJsonValidator implements JsonValidator {
     private static final Logger logger = LoggerFactory.getLogger(DependenciesValidator.class);
+    /**
+     * Simple case of "dependencies" If the object has properties in the key set, then the properties listed in
+     * the value must also be present.
+     */
     private final Map<String, List<String>> propertyDeps = new HashMap<String, List<String>>();
+    /**
+     * Dependencies can also list additional schemas that must be passed if certain properties are present
+     */
     private Map<String, JsonSchema> schemaDeps = new HashMap<String, JsonSchema>();
 
-    public DependenciesValidator(String schemaPath, JsonNode schemaNode, JsonSchema parentSchema, ObjectMapper mapper) {
-
+    public DependenciesValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.DEPENDENCIES);
 
-        for (Iterator<String> it = schemaNode.fieldNames(); it.hasNext(); ) {
-            String pname = it.next();
-            JsonNode pvalue = schemaNode.get(pname);
-            if (pvalue.isArray()) {
-                List<String> depsProps = propertyDeps.get(pname);
-                if (depsProps == null) {
-                    depsProps = new ArrayList<String>();
-                    propertyDeps.put(pname, depsProps);
+        for (String name : schemaNode.getAsJsonObject().keySet()) {
+            JsonElement value = schemaNode.getAsJsonObject().get(name);
+            if (value.isJsonArray() && value.getAsJsonArray().size() > 0) {
+                List<String> depsProps = new ArrayList<String>();
+                propertyDeps.put(name, depsProps);
+
+                for (JsonElement element : value.getAsJsonArray()) {
+                    depsProps.add(asText(element));
                 }
-                for (int i = 0; i < pvalue.size(); i++) {
-                    depsProps.add(pvalue.get(i).asText());
-                }
-            } else if (pvalue.isObject()) {
-                schemaDeps.put(pname, new JsonSchema(mapper, pname, pvalue, parentSchema));
+            } else if (value.isJsonObject()) {
+                schemaDeps.put(name, new JsonSchema(mapper, name, value, parentSchema));
             }
         }
 
         parseErrorCode(getValidatorType().getErrorCodeKey());
     }
 
-    public Set<ValidationMessage> validate(JsonNode node, JsonNode rootNode, String at) {
+    public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
         Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
 
-        for (Iterator<String> it = node.fieldNames(); it.hasNext(); ) {
-            String pname = it.next();
-            List<String> deps = propertyDeps.get(pname);
-            if (deps != null && !deps.isEmpty()) {
-                for (String field : deps) {
-                    if (node.get(field) == null) {
-                        errors.add(buildValidationMessage(at, propertyDeps.toString()));
+        if (node.isJsonObject()) {
+            JsonObject object = node.getAsJsonObject();
+
+            for (String name : object.keySet()) {
+                if (propertyDeps.containsKey(name)) {
+                    for (String requiredField : propertyDeps.get(name)) {
+                        if (!object.has(requiredField)) {
+                            errors.add(buildValidationMessage(at, propertyDeps.toString()));
+                        }
                     }
                 }
-            }
-            JsonSchema schema = schemaDeps.get(pname);
-            if (schema != null) {
-                errors.addAll(schema.validate(node, rootNode, at));
+
+                if (schemaDeps.containsKey(name)) {
+                    errors.addAll(schemaDeps.get(name).validate(node, rootNode, at));
+                }
             }
         }
 

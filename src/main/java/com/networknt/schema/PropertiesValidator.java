@@ -16,8 +16,8 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonElement;
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,30 +28,37 @@ public class PropertiesValidator extends BaseJsonValidator implements JsonValida
     private static final Logger logger = LoggerFactory.getLogger(PropertiesValidator.class);
     private Map<String, JsonSchema> schemas;
 
-    public PropertiesValidator(String schemaPath, JsonNode schemaNode, JsonSchema parentSchema, ObjectMapper mapper) {
+    public PropertiesValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.PROPERTIES);
         schemas = new HashMap<String, JsonSchema>();
-        for (Iterator<String> it = schemaNode.fieldNames(); it.hasNext(); ) {
-            String pname = it.next();
-            schemas.put(pname, new JsonSchema(mapper, schemaPath + "/" + pname, schemaNode.get(pname), parentSchema));
+        for (Map.Entry<String, JsonElement> entry : schemaNode.getAsJsonObject().entrySet()) {
+            String name = entry.getKey();
+            JsonElement val = entry.getValue();
+            schemas.put(name, new JsonSchema(mapper, schemaPath + "/" + name, val, parentSchema));
         }
     }
 
-    public Set<ValidationMessage> validate(JsonNode node, JsonNode rootNode, String at) {
+    public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
+        Set<ValidationMessage> errors = null;
 
-        for (String key : schemas.keySet()) {
-            JsonSchema propertySchema = schemas.get(key);
-            JsonNode propertyNode = node.get(key);
+        if (node.isJsonObject()) {
+            for (String key : schemas.keySet()) {
+                JsonSchema propertySchema = schemas.get(key);
+                JsonElement propertyNode = node.getAsJsonObject().get(key);
 
-            if (propertyNode != null) {
-                errors.addAll(propertySchema.validate(propertyNode, rootNode, at + "." + key));
+                if (propertyNode != null) {
+                    Set<ValidationMessage> subErrors = propertySchema.validate(propertyNode, rootNode, at + "." + key);
+                    if (!subErrors.isEmpty()) {
+                        if (errors == null) errors = new HashSet<ValidationMessage>();
+                        errors.addAll(subErrors);
+                    }
+                }
             }
         }
 
-        return errors;
+        return errors == null ? Collections.<ValidationMessage>emptySet() : errors;
     }
 
 }

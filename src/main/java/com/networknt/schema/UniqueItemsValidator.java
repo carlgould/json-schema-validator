@@ -16,8 +16,8 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonElement;
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,27 +29,27 @@ public class UniqueItemsValidator extends BaseJsonValidator implements JsonValid
 
     private boolean unique = false;
 
-    public UniqueItemsValidator(String schemaPath, JsonNode schemaNode, JsonSchema parentSchema, ObjectMapper mapper) {
+    public UniqueItemsValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.UNIQUE_ITEMS);
-        if (schemaNode.isBoolean()) {
-            unique = schemaNode.booleanValue();
+        if (isBoolean(schemaNode)) {
+            unique = schemaNode.getAsJsonPrimitive().getAsBoolean();
         }
 
         parseErrorCode(getValidatorType().getErrorCodeKey());
     }
 
-    public Set<ValidationMessage> validate(JsonNode node, JsonNode rootNode, String at) {
+    public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
         Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
 
-        if (unique) {
-            Set<JsonNode> set = new HashSet<JsonNode>();
-            for (JsonNode n : node) {
+        if (unique && node.isJsonArray()) {
+            Set<JsonElement> set = new HashSet<JsonElement>();
+            for (JsonElement n : node.getAsJsonArray()) {
                 set.add(n);
             }
 
-            if (set.size() < node.size()) {
+            if (set.size() < node.getAsJsonArray().size()) {
                 errors.add(buildValidationMessage(at));
             }
         }

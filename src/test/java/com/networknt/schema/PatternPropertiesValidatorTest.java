@@ -16,12 +16,11 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import java.util.Set;
+
+import com.google.gson.JsonElement;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * Created by steve on 22/10/16.
@@ -33,7 +32,7 @@ public class PatternPropertiesValidatorTest extends BaseJsonSchemaValidatorTest 
         JsonSchemaFactory factory = new JsonSchemaFactory();
         JsonSchema schema = factory.getSchema("{\"patternProperties\":6}");
 
-        JsonNode node = getJsonNodeFromStringContent("");
+        JsonElement node = getJsonElementFromStringContent("");
         Set<ValidationMessage> errors = schema.validate(node);
         Assert.assertEquals(errors.size(), 0);
     }

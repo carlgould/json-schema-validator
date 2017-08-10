@@ -16,8 +16,8 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonElement;
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,33 +31,34 @@ public class MinimumValidator extends BaseJsonValidator implements JsonValidator
     private double minimum;
     private boolean excluded = false;
 
-    public MinimumValidator(String schemaPath, JsonNode schemaNode, JsonSchema parentSchema, ObjectMapper mapper) {
+    public MinimumValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.MINIMUM);
-        if (schemaNode.isNumber()) {
-            minimum = schemaNode.doubleValue();
+        if (schemaNode.isJsonPrimitive() && schemaNode.getAsJsonPrimitive().isNumber()) {
+            minimum = schemaNode.getAsJsonPrimitive().getAsNumber().doubleValue();
         } else {
             throw new JsonSchemaException("minimum value is not a number");
         }
 
-        JsonNode exclusiveMinimumNode = getParentSchema().getSchemaNode().get(PROPERTY_EXCLUSIVE_MINIMUM);
-        if (exclusiveMinimumNode != null && exclusiveMinimumNode.isBoolean()) {
-            excluded = exclusiveMinimumNode.booleanValue();
+        JsonElement exclusiveMinimumNode = getParentSchema().getSchemaNode().getAsJsonObject()
+            .get(PROPERTY_EXCLUSIVE_MINIMUM);
+        if (exclusiveMinimumNode != null) {
+            excluded = exclusiveMinimumNode.getAsJsonPrimitive().getAsBoolean();
         }
 
         parseErrorCode(getValidatorType().getErrorCodeKey());
     }
 
-    public Set<ValidationMessage> validate(JsonNode node, JsonNode rootNode, String at) {
+    public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
         Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
 
-        if (!node.isNumber()) {
+        if (!(node.isJsonPrimitive() && node.getAsJsonPrimitive().isNumber())) {
             // minimum only applies to numbers
             return errors;
         }
 
-        double value = node.doubleValue();
+        double value = node.getAsJsonPrimitive().getAsNumber().doubleValue();
         if (lessThan(value, minimum) || (excluded && equals(value, minimum))) {
             errors.add(buildValidationMessage(at, "" + minimum));
         }

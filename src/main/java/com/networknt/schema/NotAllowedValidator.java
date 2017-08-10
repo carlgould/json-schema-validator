@@ -16,8 +16,8 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonElement;
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,28 +31,25 @@ public class NotAllowedValidator extends BaseJsonValidator implements JsonValida
 
     private List<String> fieldNames = new ArrayList<String>();
 
-    public NotAllowedValidator(String schemaPath, JsonNode schemaNode, JsonSchema parentSchema, ObjectMapper mapper) {
+    public NotAllowedValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
 
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.NOT_ALLOWED);
-        if (schemaNode.isArray()) {
-            int size = schemaNode.size();
-            for (int i = 0; i < size; i++) {
-                fieldNames.add(schemaNode.get(i).asText());
+        if (schemaNode.isJsonArray()) {
+            for (JsonElement element : schemaNode.getAsJsonArray()) {
+                fieldNames.add(asText(element));
             }
         }
 
         parseErrorCode(getValidatorType().getErrorCodeKey());
     }
 
-    public Set<ValidationMessage> validate(JsonNode node, JsonNode rootNode, String at) {
+    public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
         Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
 
         for (String fieldName : fieldNames) {
-            JsonNode propertyNode = node.get(fieldName);
-
-            if (propertyNode != null) {
+            if (node.getAsJsonObject().has(fieldName)) {
                 errors.add(buildValidationMessage(at, fieldName));
             }
         }

@@ -16,45 +16,43 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static org.apache.commons.lang3.StringUtils.join;
+
 public class EnumValidator extends BaseJsonValidator implements JsonValidator {
     private static final Logger logger = LoggerFactory.getLogger(EnumValidator.class);
 
-    private List<JsonNode> nodes;
+    private List<JsonElement> nodes;
     private String error;
 
-    public EnumValidator(String schemaPath, JsonNode schemaNode, JsonSchema parentSchema, ObjectMapper mapper) {
+    public EnumValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.ENUM);
-        nodes = new ArrayList<JsonNode>();
+        nodes = new ArrayList<JsonElement>();
         error = "[none]";
 
-        if (schemaNode != null && schemaNode.isArray()) {
-            error = "[";
-            int i = 0;
-            for (JsonNode n : schemaNode) {
+        if (schemaNode != null && schemaNode.isJsonArray()) {
+            List<String> errorStrings = new ArrayList<String>(schemaNode.getAsJsonArray().size());
+
+            for (JsonElement n : schemaNode.getAsJsonArray()) {
                 nodes.add(n);
-
-                String v = n.asText();
-                error = error + (i == 0 ? "" : ", ") + v;
-                i++;
-
+                errorStrings.add(asText(n));
             }
-            error = error + "]";
+            this.error = "[" + join(errorStrings, ", ") + "]";
         }
 
         parseErrorCode(getValidatorType().getErrorCodeKey());
     }
 
-    public Set<ValidationMessage> validate(JsonNode node, JsonNode rootNode, String at) {
+    public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
         Set<ValidationMessage> errors = new HashSet<ValidationMessage>();

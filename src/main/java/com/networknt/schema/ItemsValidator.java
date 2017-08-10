@@ -16,8 +16,9 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonElement;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,21 +36,22 @@ public class ItemsValidator extends BaseJsonValidator implements JsonValidator {
     private boolean additionalItems = true;
     private JsonSchema additionalSchema;
 
-    public ItemsValidator(String schemaPath, JsonNode schemaNode, JsonSchema parentSchema, ObjectMapper mapper) {
+    public ItemsValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.ITEMS);
-        if (schemaNode.isObject()) {
+        if (schemaNode.isJsonObject()) {
             schema = new JsonSchema(mapper, getValidatorType().getValue(), schemaNode, parentSchema);
-        } else {
+        } else if (schemaNode.isJsonArray()) {
             tupleSchema = new ArrayList<JsonSchema>();
-            for (JsonNode s : schemaNode) {
+            for (JsonElement s : schemaNode.getAsJsonArray()) {
                 tupleSchema.add(new JsonSchema(mapper, getValidatorType().getValue(), s, parentSchema));
             }
 
-            JsonNode addItemNode = getParentSchema().getSchemaNode().get(PROPERTY_ADDITIONAL_ITEMS);
+            JsonObject parentSchemaObject = getParentSchema().getSchemaNode().getAsJsonObject();
+            JsonElement addItemNode = parentSchemaObject.get(PROPERTY_ADDITIONAL_ITEMS);
             if (addItemNode != null) {
-                if (addItemNode.isBoolean()) {
-                    additionalItems = addItemNode.asBoolean();
-                } else if (addItemNode.isObject()) {
+                if (isBoolean(addItemNode)) {
+                    additionalItems = addItemNode.getAsJsonPrimitive().getAsBoolean();
+                } else if (addItemNode.isJsonObject()) {
                     additionalSchema = new JsonSchema(mapper, addItemNode);
                 }
             }
@@ -58,21 +60,20 @@ public class ItemsValidator extends BaseJsonValidator implements JsonValidator {
         parseErrorCode(getValidatorType().getErrorCodeKey());
     }
 
-    public Set<ValidationMessage> validate(JsonNode node, JsonNode rootNode, String at) {
+    public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
         Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
 
-        if (!node.isArray()) {
+        if (!node.isJsonArray()) {
             // ignores non-arrays
             return errors;
         }
 
         int i = 0;
-        for (JsonNode n : node) {
+        for (JsonElement n : node.getAsJsonArray()) {
             if (schema != null) {
-                // validate with item schema (the whole array has the same item
-                // schema)
+                // validate with item schema (the whole array has the same item schema)
                 errors.addAll(schema.validate(n, rootNode, at + "[" + i + "]"));
             }
 

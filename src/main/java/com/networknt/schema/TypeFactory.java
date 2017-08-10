@@ -16,13 +16,16 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import java.math.BigInteger;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
 
 public class TypeFactory {
-    public static JsonType getSchemaNodeType(JsonNode node) {
+    public static JsonType getSchemaNodeType(JsonElement node) {
         //Single Type Definition
-        if (node.isTextual()) {
-            String type = node.textValue();
+        if (node.isJsonPrimitive()) {
+            String type = node.getAsJsonPrimitive().getAsString();
             if ("object".equals(type)) {
                 return JsonType.OBJECT;
             }
@@ -50,36 +53,36 @@ public class TypeFactory {
         }
 
         //Union Type Definition
-        if (node.isArray()) {
+        if (node.isJsonArray()) {
             return JsonType.UNION;
         }
 
         return JsonType.UNKNOWN;
     }
 
-    public static JsonType getValueNodeType(JsonNode node) {
-        if (node.isContainerNode()) {
-            if (node.isObject())
-                return JsonType.OBJECT;
-            if (node.isArray())
-                return JsonType.ARRAY;
-            return JsonType.UNKNOWN;
+    public static JsonType getValueNodeType(JsonElement node) {
+        if (node.isJsonObject()) return JsonType.OBJECT;
+        if (node.isJsonArray()) return JsonType.ARRAY;
+        if (node.isJsonNull()) return JsonType.NULL;
+        if (node.isJsonPrimitive()) {
+            JsonPrimitive primitive = node.getAsJsonPrimitive();
+            if (primitive.isString()) return JsonType.STRING;
+            if (primitive.isNumber()) {
+                String numberAsString = primitive.getAsNumber().toString();
+                try {
+                    Long.parseLong(numberAsString);
+                    return JsonType.INTEGER;
+                } catch (NumberFormatException ignored) {
+                    try {
+                        new BigInteger(numberAsString);
+                        return JsonType.INTEGER;
+                    } catch (NumberFormatException moreIgnored) {
+                        return JsonType.NUMBER;
+                    }
+                }
+            }
+            if (primitive.isBoolean()) return JsonType.BOOLEAN;
         }
-
-        if (node.isValueNode()) {
-            if (node.isTextual())
-                return JsonType.STRING;
-            if (node.isIntegralNumber())
-                return JsonType.INTEGER;
-            if (node.isNumber())
-                return JsonType.NUMBER;
-            if (node.isBoolean())
-                return JsonType.BOOLEAN;
-            if (node.isNull())
-                return JsonType.NULL;
-            return JsonType.UNKNOWN;
-        }
-
         return JsonType.UNKNOWN;
     }
 

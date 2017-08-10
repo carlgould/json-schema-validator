@@ -16,7 +16,8 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
@@ -26,22 +27,22 @@ import java.util.Set;
 
 public abstract class BaseJsonValidator implements JsonValidator {
     private String schemaPath;
-    private JsonNode schemaNode;
+    private JsonElement schemaNode;
     private JsonSchema parentSchema;
     private JsonSchema subSchema;
     private ValidatorTypeCode validatorType;
     private String errorCode;
 
-    public BaseJsonValidator(String schemaPath, JsonNode schemaNode, JsonSchema parentSchema,
+    public BaseJsonValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema,
                              ValidatorTypeCode validatorType) {
         this.schemaPath = schemaPath;
         this.schemaNode = schemaNode;
         this.parentSchema = parentSchema;
         this.validatorType = validatorType;
-        this.subSchema = obainSubSchemaNode(schemaNode);
+        this.subSchema = obtainSubSchemaNode(schemaNode);
     }
 
-    public BaseJsonValidator(String schemaPath, JsonNode schemaNode, JsonSchema parentSchema,
+    public BaseJsonValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema,
                              ValidatorTypeCode validatorType, JsonSchema subSchema) {
         this.schemaPath = schemaPath;
         this.schemaNode = schemaNode;
@@ -54,14 +55,14 @@ public abstract class BaseJsonValidator implements JsonValidator {
         return schemaPath;
     }
 
-    protected JsonNode getSchemaNode() {
+    protected JsonElement getSchemaNode() {
         return schemaNode;
     }
 
     protected JsonSchema getParentSchema() {
         return parentSchema;
     }
-    
+
     protected JsonSchema getSubSchema() {
         return subSchema;
     }
@@ -69,22 +70,27 @@ public abstract class BaseJsonValidator implements JsonValidator {
     protected boolean hasSubSchema() {
         return subSchema != null;
     }
-    
-    protected JsonSchema obainSubSchemaNode(JsonNode schemaNode){
-        JsonNode node = schemaNode.get("id");
-        if(node == null) return null;
-    	if(node.equals(schemaNode.get("$schema"))) return null;
 
-        try {
-            JsonSchemaFactory factory = new JsonSchemaFactory();
-            URL url = new URL(node.textValue());
-            return factory.getSchema(url);
-        } catch (MalformedURLException e) {
+    protected JsonSchema obtainSubSchemaNode(JsonElement schemaNode) {
+        if (schemaNode.isJsonObject()) {
+            JsonObject schemaObject = schemaNode.getAsJsonObject();
+            JsonElement node = schemaObject.get("id");
+            if (node == null) return null;
+            if (node.equals(schemaObject.get("$schema"))) return null;
+
+            try {
+                JsonSchemaFactory factory = new JsonSchemaFactory();
+                URL url = new URL(node.toString());
+                return factory.getSchema(url);
+            } catch (MalformedURLException e) {
+                return null;
+            }
+        } else {
             return null;
         }
     }
 
-    public Set<ValidationMessage> validate(JsonNode node) {
+    public Set<ValidationMessage> validate(JsonElement node) {
         return validate(node, node, AT_ROOT);
     }
 
@@ -101,9 +107,14 @@ public abstract class BaseJsonValidator implements JsonValidator {
     }
 
     protected void parseErrorCode(String errorCodeKey) {
-        JsonNode errorCodeNode = getParentSchema().getSchemaNode().get(errorCodeKey);
-        if (errorCodeNode != null && errorCodeNode.isTextual()) {
-            errorCode = errorCodeNode.asText();
+        if (getParentSchema().getSchemaNode().isJsonObject()) {
+            JsonObject parentSchemaObject = getParentSchema().getSchemaNode().getAsJsonObject();
+            JsonElement errorCodeNode = parentSchemaObject.get(errorCodeKey);
+            if (errorCodeNode != null &&
+                errorCodeNode.isJsonPrimitive() &&
+                errorCodeNode.getAsJsonPrimitive().isString()) {
+                errorCode = errorCodeNode.toString();
+            }
         }
     }
 
@@ -121,12 +132,12 @@ public abstract class BaseJsonValidator implements JsonValidator {
             builder.code(getErrorCode()).path(at).arguments(arguments).type(validatorType.getValue());
         } else {
             builder.code(validatorType.getErrorCode()).path(at).arguments(arguments)
-                    .format(validatorType.getMessageFormat()).type(validatorType.getValue());
+                .format(validatorType.getMessageFormat()).type(validatorType.getValue());
         }
         return builder.build();
     }
 
-    protected void debug(Logger logger, JsonNode node, JsonNode rootNode, String at) {
+    protected void debug(Logger logger, JsonElement node, JsonElement rootNode, String at) {
         if (logger.isDebugEnabled()) {
             logger.debug("validate( " + node + ", " + rootNode + ", " + at + ")");
         }
@@ -134,5 +145,33 @@ public abstract class BaseJsonValidator implements JsonValidator {
 
     protected ValidatorTypeCode getValidatorType() {
         return validatorType;
+    }
+
+    static boolean isInteger(JsonElement element) {
+        return TypeFactory.getValueNodeType(element) == JsonType.INTEGER;
+    }
+
+    public int asInt(JsonElement element) {
+        return element.getAsJsonPrimitive().getAsNumber().intValue();
+    }
+
+    static boolean isBoolean(JsonElement element) {
+        return element.isJsonPrimitive() && element.getAsJsonPrimitive().isBoolean();
+    }
+
+    static boolean isNumber(JsonElement element) {
+        return element.isJsonPrimitive() && element.getAsJsonPrimitive().isNumber();
+    }
+
+    static boolean isString(JsonElement element) {
+        return element.isJsonPrimitive() && element.getAsJsonPrimitive().isString();
+    }
+
+    static String asText(JsonElement element) {
+        return element.isJsonPrimitive() ? element.getAsJsonPrimitive().getAsString() : element.toString();
+    }
+
+    static double doubleValue(JsonElement element) {
+        return element.getAsJsonPrimitive().getAsNumber().doubleValue();
     }
 }

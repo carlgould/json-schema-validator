@@ -16,9 +16,9 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 import java.util.Set;
+
+import com.google.gson.JsonElement;
 
 /**
  * Standard json validator interface, implemented by all validators and JsonSchema.
@@ -27,24 +27,24 @@ public interface JsonValidator {
     public static final String AT_ROOT = "$";
 
     /**
-     * Validate the given root JsonNode, starting at the root of the data path.
+     * Validate the given root JsonElement, starting at the root of the data path.
      *
-     * @param rootNode JsonNode
+     * @param rootNode JsonElement
      * @return A list of ValidationMessage if there is any validation error, or an empty
      * list if there is no error.
      */
-    Set<ValidationMessage> validate(JsonNode rootNode);
+    Set<ValidationMessage> validate(JsonElement rootNode);
 
     /**
-     * Validate the given JsonNode, the given node is the child node of the root node at given
+     * Validate the given JsonElement, the given node is the child node of the root node at given
      * data path.
      *
-     * @param node     JsonNode
-     * @param rootNode JsonNode
+     * @param node     JsonElement
+     * @param rootNode JsonElement
      * @param at       String
      * @return A list of ValidationMessage if there is any validation error, or an empty
      * list if there is no error.
      */
-    Set<ValidationMessage> validate(JsonNode node, JsonNode rootNode, String at);
+    Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at);
 
 }

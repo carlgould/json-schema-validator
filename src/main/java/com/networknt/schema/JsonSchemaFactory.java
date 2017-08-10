@@ -16,14 +16,19 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonElement;
+import com.google.gson.Gson;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 public class JsonSchemaFactory {
 
@@ -31,41 +36,43 @@ public class JsonSchemaFactory {
     private static final String DRAFT_4_ID = "id";
 
     private static final Logger logger = LoggerFactory
-            .getLogger(JsonSchemaFactory.class);
-    private ObjectMapper mapper;
+        .getLogger(JsonSchemaFactory.class);
+    private Gson mapper;
 
     public JsonSchemaFactory() {
-        this(new ObjectMapper());
+        this(new Gson());
     }
 
-    public JsonSchemaFactory(ObjectMapper mapper) {
+    public JsonSchemaFactory(Gson mapper) {
         this.mapper = mapper;
     }
 
     public JsonSchema getSchema(String schema) {
         try {
-            JsonNode schemaNode = mapper.readTree(schema);
+            JsonElement schemaNode = new JsonParser().parse(schema);
             return new JsonSchema(mapper, schemaNode);
-        } catch (IOException ioe) {
-            logger.error("Failed to load json schema!", ioe);
-            throw new JsonSchemaException(ioe);
+        } catch (Exception ex) {
+            logger.error("Failed to load json schema!", ex);
+            throw new JsonSchemaException(ex);
         }
     }
 
     public JsonSchema getSchema(InputStream schemaStream) {
         try {
-            JsonNode schemaNode = mapper.readTree(schemaStream);
+            JsonElement schemaNode = new JsonParser().parse(
+                new InputStreamReader(schemaStream, StandardCharsets.UTF_8));
             return new JsonSchema(mapper, schemaNode);
-        } catch (IOException ioe) {
-            logger.error("Failed to load json schema!", ioe);
-            throw new JsonSchemaException(ioe);
+        } catch (Exception ex) {
+            logger.error("Failed to load json schema!", ex);
+            throw new JsonSchemaException(ex);
         }
     }
 
     public JsonSchema getSchema(URL schemaURL) {
         try {
 
-            JsonNode schemaNode = mapper.readTree(schemaURL.openStream());
+            Reader reader = new InputStreamReader(schemaURL.openStream(), StandardCharsets.UTF_8);
+            JsonElement schemaNode = new JsonParser().parse(reader);
 
             if (this.idMatchesSourceUrl(schemaNode, schemaURL)) {
                 return new JsonSchema(mapper, schemaNode, null);
@@ -79,19 +86,19 @@ public class JsonSchemaFactory {
         }
     }
 
-    public JsonSchema getSchema(JsonNode jsonNode) {
+    public JsonSchema getSchema(JsonElement jsonNode) {
         return new JsonSchema(mapper, jsonNode);
     }
 
-    private boolean idMatchesSourceUrl(JsonNode schema, URL schemaUrl) {
+    private boolean idMatchesSourceUrl(JsonElement schema, URL schemaUrl) {
 
-        JsonNode idNode = schema.get(DRAFT_4_ID);
+        JsonElement idNode = schema.getAsJsonObject().get(DRAFT_4_ID);
 
         if (idNode == null) {
             return false;
         }
 
-        String id = idNode.asText();
+        String id = idNode.getAsJsonPrimitive().getAsString();
         logger.info("Matching " + id + " to " + schemaUrl.toString());
         return id.equals(schemaUrl.toString());
 

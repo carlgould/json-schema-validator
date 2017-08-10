@@ -16,8 +16,8 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonElement;
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,28 +31,26 @@ public class RequiredValidator extends BaseJsonValidator implements JsonValidato
 
     private List<String> fieldNames = new ArrayList<String>();
 
-    public RequiredValidator(String schemaPath, JsonNode schemaNode, JsonSchema parentSchema, ObjectMapper mapper) {
+    public RequiredValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
 
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.REQUIRED);
-        if (schemaNode.isArray()) {
-            int size = schemaNode.size();
+        if (schemaNode.isJsonArray()) {
+            int size = schemaNode.getAsJsonArray().size();
             for (int i = 0; i < size; i++) {
-                fieldNames.add(schemaNode.get(i).asText());
+                fieldNames.add(asText(schemaNode.getAsJsonArray().get(i)));
             }
         }
 
         parseErrorCode(getValidatorType().getErrorCodeKey());
     }
 
-    public Set<ValidationMessage> validate(JsonNode node, JsonNode rootNode, String at) {
+    public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
         Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
 
         for (String fieldName : fieldNames) {
-            JsonNode propertyNode = node.get(fieldName);
-
-            if (propertyNode == null) {
+            if (!node.getAsJsonObject().has(fieldName)) {
                 errors.add(buildValidationMessage(at, fieldName));
             }
         }

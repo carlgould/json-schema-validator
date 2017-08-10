@@ -16,8 +16,8 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonElement;
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,22 +29,22 @@ public class MaxItemsValidator extends BaseJsonValidator implements JsonValidato
 
     private int max = 0;
 
-    public MaxItemsValidator(String schemaPath, JsonNode schemaNode, JsonSchema parentSchema, ObjectMapper mapper) {
+    public MaxItemsValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.MAX_ITEMS);
-        if (schemaNode.isIntegralNumber()) {
-            max = schemaNode.intValue();
+        if (isInteger(schemaNode)) {
+            max = asInt(schemaNode);
         }
 
         parseErrorCode(getValidatorType().getErrorCodeKey());
     }
 
-    public Set<ValidationMessage> validate(JsonNode node, JsonNode rootNode, String at) {
+    public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
         Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
 
-        if (node.isArray()) {
-            if (node.size() > max) {
+        if (node.isJsonArray()) {
+            if (node.getAsJsonArray().size() > max) {
                 errors.add(buildValidationMessage(at, "" + max));
             }
         }

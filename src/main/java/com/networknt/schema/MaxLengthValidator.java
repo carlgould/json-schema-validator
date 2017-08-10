@@ -16,8 +16,8 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonElement;
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,17 +29,17 @@ public class MaxLengthValidator extends BaseJsonValidator implements JsonValidat
 
     private int maxLength;
 
-    public MaxLengthValidator(String schemaPath, JsonNode schemaNode, JsonSchema parentSchema, ObjectMapper mapper) {
+    public MaxLengthValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.MAX_LENGTH);
         maxLength = Integer.MAX_VALUE;
-        if (schemaNode != null && schemaNode.isIntegralNumber()) {
-            maxLength = schemaNode.intValue();
+        if (schemaNode != null && isInteger(schemaNode)) {
+            maxLength = asInt(schemaNode);
         }
 
         parseErrorCode(getValidatorType().getErrorCodeKey());
     }
 
-    public Set<ValidationMessage> validate(JsonNode node, JsonNode rootNode, String at) {
+    public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
         JsonType nodeType = TypeFactory.getValueNodeType(node);
@@ -48,7 +48,9 @@ public class MaxLengthValidator extends BaseJsonValidator implements JsonValidat
             // ignore no-string typs
             return errors;
         }
-        if (node.textValue().codePointCount(0, node.textValue().length()) > maxLength) {
+
+        String textValue = asText(node);
+        if (textValue.codePointCount(0, textValue.length()) > maxLength) {
             errors.add(buildValidationMessage(at, "" + maxLength));
         }
         return errors;

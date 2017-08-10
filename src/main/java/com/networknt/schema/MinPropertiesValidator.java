@@ -16,8 +16,8 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonElement;
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,23 +29,23 @@ public class MinPropertiesValidator extends BaseJsonValidator implements JsonVal
 
     protected int min;
 
-    public MinPropertiesValidator(String schemaPath, JsonNode schemaNode, JsonSchema parentSchema,
-                                  ObjectMapper mapper) {
+    public MinPropertiesValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema,
+                                  Gson mapper) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.MIN_PROPERTIES);
-        if (schemaNode.isIntegralNumber()) {
-            min = schemaNode.intValue();
+        if (isInteger(schemaNode)) {
+            min = asInt(schemaNode);
         }
 
         parseErrorCode(getValidatorType().getErrorCodeKey());
     }
 
-    public Set<ValidationMessage> validate(JsonNode node, JsonNode rootNode, String at) {
+    public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
         Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
 
-        if (node.isObject()) {
-            if (node.size() < min) {
+        if (node.isJsonObject()) {
+            if (node.getAsJsonObject().size() < min) {
                 errors.add(buildValidationMessage(at, "" + min));
             }
         }

@@ -16,60 +16,55 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 
 /**
  * Created by steve on 22/10/16.
  */
 public class BaseJsonSchemaValidatorTest {
-    protected JsonNode getJsonNodeFromClasspath(String name) throws Exception {
-        InputStream is1 = Thread.currentThread().getContextClassLoader()
-                .getResourceAsStream(name);
-
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode node = mapper.readTree(is1);
-        return node;
+    static JsonElement getJsonElementFromClasspath(String name) throws Exception {
+        return getJsonElementFromStream(
+            Thread.currentThread().getContextClassLoader().getResourceAsStream(name));
     }
 
-    protected JsonNode getJsonNodeFromStringContent(String content) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode node = mapper.readTree(content);
-        return node;
+    static JsonElement getJsonElementFromStringContent(String content) throws Exception {
+        return new JsonParser().parse(content);
     }
 
-    protected JsonNode getJsonNodeFromUrl(String url) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode node = mapper.readTree(new URL(url));
-        return node;
+    static JsonElement getJsonElementFromUrl(String url) throws Exception {
+        return getJsonElementFromStream(new URL(url).openStream());
+    }
+
+    static JsonElement getJsonElementFromStream(InputStream stream) throws Exception {
+        return new JsonParser().parse(new InputStreamReader(stream, StandardCharsets.UTF_8));
     }
 
     protected JsonSchema getJsonSchemaFromClasspath(String name) throws Exception {
         JsonSchemaFactory factory = new JsonSchemaFactory();
         InputStream is = Thread.currentThread().getContextClassLoader()
-                .getResourceAsStream(name);
-        JsonSchema schema = factory.getSchema(is);
-        return schema;
+            .getResourceAsStream(name);
+        return factory.getSchema(is);
     }
 
     protected JsonSchema getJsonSchemaFromStringContent(String schemaContent) throws Exception {
         JsonSchemaFactory factory = new JsonSchemaFactory();
-        JsonSchema schema = factory.getSchema(schemaContent);
-        return schema;
+        return factory.getSchema(schemaContent);
     }
 
     protected JsonSchema getJsonSchemaFromUrl(String url) throws Exception {
         JsonSchemaFactory factory = new JsonSchemaFactory();
-        JsonSchema schema = factory.getSchema(new URL(url));
-        return schema;
+        return factory.getSchema(new URL(url));
     }
 
-    protected JsonSchema getJsonSchemaFromJsonNode(JsonNode jsonNode) throws Exception {
+    protected JsonSchema getJsonSchemaFromJsonElement(JsonElement JsonElement) throws Exception {
         JsonSchemaFactory factory = new JsonSchemaFactory();
-        JsonSchema schema = factory.getSchema(jsonNode);
-        return schema;
+        return factory.getSchema(JsonElement);
     }
 }

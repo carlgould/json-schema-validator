@@ -16,8 +16,8 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonElement;
+import com.google.gson.Gson;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,51 +33,50 @@ public class OneOfValidator extends BaseJsonValidator implements JsonValidator {
 
     private List<JsonSchema> schemas = new ArrayList<JsonSchema>();
 
-    public OneOfValidator(String schemaPath, JsonNode schemaNode, JsonSchema parentSchema, ObjectMapper mapper) {
+    public OneOfValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.ONE_OF);
-        int size = schemaNode.size();
-        for (int i = 0; i < size; i++) {
-            schemas.add(new JsonSchema(mapper, getValidatorType().getValue(), schemaNode.get(i), parentSchema));
+        for (JsonElement sub : schemaNode.getAsJsonArray()) {
+            schemas.add(new JsonSchema(mapper, getValidatorType().getValue(), sub, parentSchema));
         }
 
         parseErrorCode(getValidatorType().getErrorCodeKey());
     }
 
-    public Set<ValidationMessage> validate(JsonNode node, JsonNode rootNode, String at) {
+    public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
         int numberOfValidSchema = 0;
         Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
-        
+
         for (JsonSchema schema : schemas) {
-        	Set<ValidationMessage> schemaErrors = schema.validate(node, rootNode, at);
+            Set<ValidationMessage> schemaErrors = schema.validate(node, rootNode, at);
             if (schemaErrors.isEmpty()) {
                 numberOfValidSchema++;
                 errors = new HashSet<ValidationMessage>();
             }
-            if(numberOfValidSchema == 0){
-        		errors.addAll(schemaErrors);
-        	}
+            if (numberOfValidSchema == 0) {
+                errors.addAll(schemaErrors);
+            }
             if (numberOfValidSchema > 1) {
                 break;
             }
         }
-        
+
         if (numberOfValidSchema == 0) {
-            for (Iterator<ValidationMessage> it = errors.iterator(); it.hasNext();) {
+            for (Iterator<ValidationMessage> it = errors.iterator(); it.hasNext(); ) {
                 ValidationMessage msg = it.next();
-                
-                if (ValidatorTypeCode.ADDITIONAL_PROPERTIES.equals(ValidatorTypeCode.fromValue(msg
-                        .getType()))) {
+
+                if (ValidatorTypeCode.ADDITIONAL_PROPERTIES.equals(
+                    ValidatorTypeCode.fromValue(msg.getType()))) {
                     it.remove();
                 }
             }
         }
         if (numberOfValidSchema > 1) {
-        	errors = new HashSet<ValidationMessage>();
-        	errors.add(buildValidationMessage(at, ""));
+            errors = new HashSet<ValidationMessage>();
+            errors.add(buildValidationMessage(at, ""));
         }
-        
+
         return errors;
     }
 

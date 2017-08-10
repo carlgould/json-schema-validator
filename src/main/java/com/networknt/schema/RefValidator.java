@@ -16,8 +16,8 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonElement;
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,10 +36,10 @@ public class RefValidator extends BaseJsonValidator implements JsonValidator {
     private final String REF_CURRENT = "#";
     private final String REF_RELATIVE = "../";
 
-    public RefValidator(String schemaPath, JsonNode schemaNode, JsonSchema parentSchema, ObjectMapper mapper) {
+    public RefValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
 
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.REF);
-        String refValue = schemaNode.asText();
+        String refValue = asText(schemaNode);
         if (!refValue.startsWith(REF_CURRENT)) {
             // handle remote ref
         	String schemaUrl = refValue;
@@ -68,7 +68,7 @@ public class RefValidator extends BaseJsonValidator implements JsonValidator {
         if (refValue.equals(REF_CURRENT)) {
             schema = parentSchema.findAncestor();
         } else {
-            JsonNode node = parentSchema.getRefSchemaNode(refValue);
+            JsonElement node = parentSchema.getRefSchemaNode(refValue);
             if (node != null) {
                 schema = new JsonSchema(mapper, refValue, node, parentSchema);
             }
@@ -80,7 +80,7 @@ public class RefValidator extends BaseJsonValidator implements JsonValidator {
     }
     
     private String obtainAbsolutePath(JsonSchema parentSchema, String schemaUrl) {
-    	String baseSchemaUrl = parentSchema.findAncestor().getSchemaNode().get("id").textValue();
+    	String baseSchemaUrl = asText(parentSchema.findAncestor().getSchemaNode().getAsJsonObject().get("id"));
 		int index = baseSchemaUrl.lastIndexOf("/");
 		baseSchemaUrl = baseSchemaUrl.substring(0, index);
 		
@@ -106,7 +106,7 @@ public class RefValidator extends BaseJsonValidator implements JsonValidator {
 		return schemaRef;
     }
 
-    public Set<ValidationMessage> validate(JsonNode node, JsonNode rootNode, String at) {
+    public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
         if (schema != null) {

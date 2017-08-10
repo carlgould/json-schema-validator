@@ -16,8 +16,8 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonElement;
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,17 +29,17 @@ public class MinLengthValidator extends BaseJsonValidator implements JsonValidat
 
     private int minLength;
 
-    public MinLengthValidator(String schemaPath, JsonNode schemaNode, JsonSchema parentSchema, ObjectMapper mapper) {
+    public MinLengthValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.MIN_LENGTH);
         minLength = Integer.MIN_VALUE;
-        if (schemaNode != null && schemaNode.isIntegralNumber()) {
-            minLength = schemaNode.intValue();
+        if (schemaNode != null && isInteger((schemaNode))) {
+            minLength = asInt(schemaNode);
         }
 
         parseErrorCode(getValidatorType().getErrorCodeKey());
     }
 
-    public Set<ValidationMessage> validate(JsonNode node, JsonNode rootNode, String at) {
+    public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
         JsonType nodeType = TypeFactory.getValueNodeType(node);
@@ -49,7 +49,9 @@ public class MinLengthValidator extends BaseJsonValidator implements JsonValidat
             return errors;
         }
 
-        if (node.textValue().codePointCount(0, node.textValue().length()) < minLength) {
+        String textValue = asText(node);
+
+        if (textValue.codePointCount(0, textValue.length()) < minLength) {
             errors.add(buildValidationMessage(at, "" + minLength));
         }
         return errors;

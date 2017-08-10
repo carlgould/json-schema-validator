@@ -16,46 +16,46 @@
 
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PatternPropertiesValidator extends BaseJsonValidator implements JsonValidator {
     public static final String PROPERTY = "patternProperties";
     private static final Logger logger = LoggerFactory.getLogger(PatternPropertiesValidator.class);
     private Map<Pattern, JsonSchema> schemas = new HashMap<Pattern, JsonSchema>();
 
-    public PatternPropertiesValidator(String schemaPath, JsonNode schemaNode, JsonSchema parentSchema,
-                                      ObjectMapper mapper) {
+    public PatternPropertiesValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema,
+                                      Gson mapper) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.PATTERN_PROPERTIES);
-        if (!schemaNode.isObject()) {
+        if (!schemaNode.isJsonObject()) {
             throw new JsonSchemaException("patternProperties must be an object node");
         }
-        Iterator<String> names = schemaNode.fieldNames();
-        while (names.hasNext()) {
-            String name = names.next();
-            schemas.put(Pattern.compile(name), new JsonSchema(mapper, name, schemaNode.get(name), parentSchema));
+        for (String name : schemaNode.getAsJsonObject().keySet()) {
+            schemas.put(Pattern.compile(name),
+                new JsonSchema(mapper, name, schemaNode.getAsJsonObject().get(name), parentSchema));
         }
     }
 
-    public Set<ValidationMessage> validate(JsonNode node, JsonNode rootNode, String at) {
+    public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
         Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
 
-        if (!node.isObject()) {
+        if (!node.isJsonObject()) {
             return errors;
         }
 
-        Iterator<String> names = node.fieldNames();
-        while (names.hasNext()) {
-            String name = names.next();
-            JsonNode n = node.get(name);
+        for (String name : node.getAsJsonObject().keySet()) {
+            JsonElement n = node.getAsJsonObject().get(name);
             for (Pattern pattern : schemas.keySet()) {
                 Matcher m = pattern.matcher(name);
                 if (m.find()) {

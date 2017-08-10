@@ -1,6 +1,6 @@
 package com.networknt.schema;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.google.gson.JsonElement;
 import org.junit.Test;
 
 /**
@@ -9,7 +9,7 @@ import org.junit.Test;
 public class SelfRefTest extends BaseJsonSchemaValidatorTest {
     @Test
     public void testSelfRef() throws Exception {
-        JsonNode node = getJsonNodeFromClasspath("selfref.json");
+        JsonElement node = getJsonElementFromClasspath("selfref.json");
         System.out.println("node = " + node);
     }
 }
