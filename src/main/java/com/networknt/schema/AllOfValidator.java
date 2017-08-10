@@ -21,9 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,17 +30,17 @@ public class AllOfValidator extends BaseJsonValidator implements JsonValidator {
 
     private List<JsonSchema> schemas = new ArrayList<JsonSchema>();
 
-    public AllOfValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
+    public AllOfValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.ALL_OF);
         for (JsonElement subSchema : schemaNode.getAsJsonArray()) {
-            schemas.add(new JsonSchema(mapper, getValidatorType().getValue(), subSchema, parentSchema));
+            schemas.add(new JsonSchema(getValidatorType().getValue(), subSchema, parentSchema));
         }
     }
 
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
+        Set<ValidationMessage> errors = new HashSet<>();
 
         for (JsonSchema schema : schemas) {
             errors.addAll(schema.validate(node, rootNode, at));

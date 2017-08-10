@@ -43,30 +43,28 @@ public class JsonSchema extends BaseJsonValidator {
     private static final Logger logger = LoggerFactory.getLogger(JsonSchema.class);
     private static final Pattern intPattern = Pattern.compile("^[0-9]+$");
     protected Map<String, JsonValidator> validators;
-    private Gson mapper;
 
-    JsonSchema(Gson mapper, JsonElement schemaNode) {
-        this(mapper, "#", schemaNode, null);
+    JsonSchema(JsonElement schemaNode) {
+        this("#", schemaNode, null);
     }
 
-    JsonSchema(Gson mapper, String schemaPath, JsonElement schemaNode,
+    JsonSchema(String schemaPath, JsonElement schemaNode,
                JsonSchema parent) {
         super(schemaPath, schemaNode, parent, null);
-        this.init(mapper, schemaNode);
+        this.init(schemaNode);
     }
 
-    JsonSchema(Gson mapper, String schemaPath, JsonElement schemaNode,
+    JsonSchema(String schemaPath, JsonElement schemaNode,
                JsonSchema parent, JsonSchema subSchema) {
         super(schemaPath, schemaNode, parent, null, subSchema);
-        this.init(mapper, schemaNode);
+        this.init(schemaNode);
     }
 
-    public JsonSchema(Gson mapper, JsonElement schemaNode, JsonSchema subSchema) {
-        this(mapper, "#", schemaNode, null, subSchema);
+    public JsonSchema(JsonElement schemaNode, JsonSchema subSchema) {
+        this("#", schemaNode, null, subSchema);
     }
 
-    private void init(Gson mapper, JsonElement schemaNode) {
-        this.mapper = mapper;
+    private void init(JsonElement schemaNode) {
         this.validators = new LinkedHashMap<String, JsonValidator>();
         this.read(schemaNode);
     }
@@ -136,9 +134,9 @@ public class JsonSchema extends BaseJsonValidator {
                     .forName("com.networknt.schema." + className);
                 Constructor<JsonValidator> c = null;
                 c = clazz.getConstructor(new Class[]{String.class,
-                    JsonElement.class, JsonSchema.class, Gson.class});
+                    JsonElement.class, JsonSchema.class});
                 validators.put(getSchemaPath() + "/" + pname, c.newInstance(
-                    getSchemaPath() + "/" + pname, n, this, mapper));
+                    getSchemaPath() + "/" + pname, n, this));
             } catch (IllegalArgumentException e) {
                 // ignore unsupported schema node
             } catch (InvocationTargetException e) {

@@ -16,16 +16,15 @@
 
 package com.networknt.schema;
 
-import com.google.gson.JsonElement;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ItemsValidator extends BaseJsonValidator implements JsonValidator {
     private static final Logger logger = LoggerFactory.getLogger(ItemsValidator.class);
@@ -36,14 +35,14 @@ public class ItemsValidator extends BaseJsonValidator implements JsonValidator {
     private boolean additionalItems = true;
     private JsonSchema additionalSchema;
 
-    public ItemsValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
+    public ItemsValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.ITEMS);
         if (schemaNode.isJsonObject()) {
-            schema = new JsonSchema(mapper, getValidatorType().getValue(), schemaNode, parentSchema);
+            schema = new JsonSchema(getValidatorType().getValue(), schemaNode, parentSchema);
         } else if (schemaNode.isJsonArray()) {
-            tupleSchema = new ArrayList<JsonSchema>();
+            tupleSchema = new ArrayList<>();
             for (JsonElement s : schemaNode.getAsJsonArray()) {
-                tupleSchema.add(new JsonSchema(mapper, getValidatorType().getValue(), s, parentSchema));
+                tupleSchema.add(new JsonSchema(getValidatorType().getValue(), s, parentSchema));
             }
 
             JsonObject parentSchemaObject = getParentSchema().getSchemaNode().getAsJsonObject();
@@ -52,7 +51,7 @@ public class ItemsValidator extends BaseJsonValidator implements JsonValidator {
                 if (isBoolean(addItemNode)) {
                     additionalItems = addItemNode.getAsJsonPrimitive().getAsBoolean();
                 } else if (addItemNode.isJsonObject()) {
-                    additionalSchema = new JsonSchema(mapper, addItemNode);
+                    additionalSchema = new JsonSchema(addItemNode);
                 }
             }
         }
@@ -63,7 +62,7 @@ public class ItemsValidator extends BaseJsonValidator implements JsonValidator {
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
+        Set<ValidationMessage> errors = new HashSet<>();
 
         if (!node.isJsonArray()) {
             // ignores non-arrays

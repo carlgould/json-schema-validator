@@ -23,7 +23,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,22 +32,21 @@ public class PatternPropertiesValidator extends BaseJsonValidator implements Jso
     private static final Logger logger = LoggerFactory.getLogger(PatternPropertiesValidator.class);
     private Map<Pattern, JsonSchema> schemas = new HashMap<Pattern, JsonSchema>();
 
-    public PatternPropertiesValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema,
-                                      Gson mapper) {
+    public PatternPropertiesValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.PATTERN_PROPERTIES);
         if (!schemaNode.isJsonObject()) {
             throw new JsonSchemaException("patternProperties must be an object node");
         }
         for (String name : schemaNode.getAsJsonObject().keySet()) {
             schemas.put(Pattern.compile(name),
-                new JsonSchema(mapper, name, schemaNode.getAsJsonObject().get(name), parentSchema));
+                new JsonSchema(name, schemaNode.getAsJsonObject().get(name), parentSchema));
         }
     }
 
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
+        Set<ValidationMessage> errors = new HashSet<>();
 
         if (!node.isJsonObject()) {
             return errors;

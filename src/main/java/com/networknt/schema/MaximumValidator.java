@@ -16,14 +16,13 @@
 
 package com.networknt.schema;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.google.gson.JsonElement;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public class MaximumValidator extends BaseJsonValidator implements JsonValidator {
     private static final Logger logger = LoggerFactory.getLogger(MaximumValidator.class);
@@ -32,7 +31,7 @@ public class MaximumValidator extends BaseJsonValidator implements JsonValidator
     private double maximum;
     private boolean excludeEqual = false;
 
-    public MaximumValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
+    public MaximumValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema) {
 
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.MAXIMUM);
         if (isNumber(schemaNode)) {
@@ -53,7 +52,7 @@ public class MaximumValidator extends BaseJsonValidator implements JsonValidator
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
+        Set<ValidationMessage> errors = new HashSet<>();
 
         if (!isNumber(node)) {
             // maximum only applies to numbers

@@ -16,16 +16,15 @@
 
 package com.networknt.schema;
 
-import com.google.gson.JsonElement;
-import com.google.gson.Gson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+
+import com.google.gson.JsonElement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PatternValidator extends BaseJsonValidator implements JsonValidator {
     private static final Logger logger = LoggerFactory.getLogger(PatternValidator.class);
@@ -33,7 +32,7 @@ public class PatternValidator extends BaseJsonValidator implements JsonValidator
     private String pattern;
     private Pattern p;
 
-    public PatternValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
+    public PatternValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema) {
 
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.PATTERN);
         pattern = "";
@@ -48,7 +47,7 @@ public class PatternValidator extends BaseJsonValidator implements JsonValidator
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
+        Set<ValidationMessage> errors = new HashSet<>();
 
         JsonType nodeType = TypeFactory.getValueNodeType(node);
         if (nodeType != JsonType.STRING && nodeType != JsonType.NUMBER && nodeType != JsonType.INTEGER) {

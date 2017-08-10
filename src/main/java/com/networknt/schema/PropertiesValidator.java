@@ -16,25 +16,28 @@
 
 package com.networknt.schema;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import com.google.gson.JsonElement;
-import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.*;
 
 public class PropertiesValidator extends BaseJsonValidator implements JsonValidator {
     public static final String PROPERTY = "properties";
     private static final Logger logger = LoggerFactory.getLogger(PropertiesValidator.class);
     private Map<String, JsonSchema> schemas;
 
-    public PropertiesValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
+    public PropertiesValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.PROPERTIES);
-        schemas = new HashMap<String, JsonSchema>();
+        schemas = new HashMap<>();
         for (Map.Entry<String, JsonElement> entry : schemaNode.getAsJsonObject().entrySet()) {
             String name = entry.getKey();
             JsonElement val = entry.getValue();
-            schemas.put(name, new JsonSchema(mapper, schemaPath + "/" + name, val, parentSchema));
+            schemas.put(name, new JsonSchema(schemaPath + "/" + name, val, parentSchema));
         }
     }
 
@@ -51,14 +54,14 @@ public class PropertiesValidator extends BaseJsonValidator implements JsonValida
                 if (propertyNode != null) {
                     Set<ValidationMessage> subErrors = propertySchema.validate(propertyNode, rootNode, at + "." + key);
                     if (!subErrors.isEmpty()) {
-                        if (errors == null) errors = new HashSet<ValidationMessage>();
+                        if (errors == null) errors = new HashSet<>();
                         errors.addAll(subErrors);
                     }
                 }
             }
         }
 
-        return errors == null ? Collections.<ValidationMessage>emptySet() : errors;
+        return errors == null ? Collections.emptySet() : errors;
     }
 
 }

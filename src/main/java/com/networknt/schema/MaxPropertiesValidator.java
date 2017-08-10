@@ -19,7 +19,6 @@ package com.networknt.schema;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,8 +28,7 @@ public class MaxPropertiesValidator extends BaseJsonValidator implements JsonVal
 
     private int max;
 
-    public MaxPropertiesValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema,
-                                  Gson mapper) {
+    public MaxPropertiesValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.MAX_PROPERTIES);
         if (isInteger(schemaNode)) {
             max = asInt(schemaNode);
@@ -42,7 +40,7 @@ public class MaxPropertiesValidator extends BaseJsonValidator implements JsonVal
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
+        Set<ValidationMessage> errors = new HashSet<>();
 
         if (node.isJsonObject()) {
             if (node.getAsJsonObject().size() > max) {

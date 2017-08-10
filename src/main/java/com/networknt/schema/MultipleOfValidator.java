@@ -16,20 +16,19 @@
 
 package com.networknt.schema;
 
-import com.google.gson.JsonElement;
-import com.google.gson.Gson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashSet;
 import java.util.Set;
+
+import com.google.gson.JsonElement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MultipleOfValidator extends BaseJsonValidator implements JsonValidator {
     private static final Logger logger = LoggerFactory.getLogger(MultipleOfValidator.class);
 
     private double divisor = 0;
 
-    public MultipleOfValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
+    public MultipleOfValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema) {
 
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.MULTIPLE_OF);
         if (isNumber(schemaNode)) {
@@ -42,7 +41,7 @@ public class MultipleOfValidator extends BaseJsonValidator implements JsonValida
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
+        Set<ValidationMessage> errors = new HashSet<>();
 
         if (isNumber(node)) {
             double nodeValue = node.getAsJsonPrimitive().getAsNumber().doubleValue();

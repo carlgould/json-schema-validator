@@ -75,7 +75,7 @@ public class JsonSchemaTest {
         for (int j = 0; j < testCases.size(); j++) {
             try {
                 JsonObject testCase = testCases.get(j).getAsJsonObject();
-                JsonSchema schema = new JsonSchema(new Gson(), testCase.get("schema"));
+                JsonSchema schema = new JsonSchema(testCase.get("schema"));
                 JsonArray testNodes = testCase.get("tests").getAsJsonArray();
                 for (int i = 0; i < testNodes.size(); i++) {
                     JsonObject test = testNodes.get(i).getAsJsonObject();

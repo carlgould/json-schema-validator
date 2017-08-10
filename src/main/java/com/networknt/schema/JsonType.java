@@ -29,9 +29,9 @@ public enum JsonType {
     UNKNOWN("unknown"),
     UNION("union");
 
-    private String type;
+    private final String type;
 
-    private JsonType(String typeStr) {
+    JsonType(String typeStr) {
         type = typeStr;
     }
 

@@ -16,13 +16,17 @@
 
 package com.networknt.schema;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.google.gson.JsonElement;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.*;
 
 public class DependenciesValidator extends BaseJsonValidator implements JsonValidator {
     private static final Logger logger = LoggerFactory.getLogger(DependenciesValidator.class);
@@ -36,7 +40,7 @@ public class DependenciesValidator extends BaseJsonValidator implements JsonVali
      */
     private Map<String, JsonSchema> schemaDeps = new HashMap<String, JsonSchema>();
 
-    public DependenciesValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
+    public DependenciesValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.DEPENDENCIES);
 
         for (String name : schemaNode.getAsJsonObject().keySet()) {
@@ -49,7 +53,7 @@ public class DependenciesValidator extends BaseJsonValidator implements JsonVali
                     depsProps.add(asText(element));
                 }
             } else if (value.isJsonObject()) {
-                schemaDeps.put(name, new JsonSchema(mapper, name, value, parentSchema));
+                schemaDeps.put(name, new JsonSchema(name, value, parentSchema));
             }
         }
 
@@ -59,7 +63,7 @@ public class DependenciesValidator extends BaseJsonValidator implements JsonVali
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
+        Set<ValidationMessage> errors = new HashSet<>();
 
         if (node.isJsonObject()) {
             JsonObject object = node.getAsJsonObject();

@@ -16,19 +16,17 @@
 
 package com.networknt.schema;
 
-import com.google.gson.JsonElement;
-import com.google.gson.Gson;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JsonSchemaFactory {
 
@@ -37,20 +35,14 @@ public class JsonSchemaFactory {
 
     private static final Logger logger = LoggerFactory
         .getLogger(JsonSchemaFactory.class);
-    private Gson mapper;
 
     public JsonSchemaFactory() {
-        this(new Gson());
-    }
-
-    public JsonSchemaFactory(Gson mapper) {
-        this.mapper = mapper;
     }
 
     public JsonSchema getSchema(String schema) {
         try {
             JsonElement schemaNode = new JsonParser().parse(schema);
-            return new JsonSchema(mapper, schemaNode);
+            return new JsonSchema(schemaNode);
         } catch (Exception ex) {
             logger.error("Failed to load json schema!", ex);
             throw new JsonSchemaException(ex);
@@ -61,7 +53,7 @@ public class JsonSchemaFactory {
         try {
             JsonElement schemaNode = new JsonParser().parse(
                 new InputStreamReader(schemaStream, StandardCharsets.UTF_8));
-            return new JsonSchema(mapper, schemaNode);
+            return new JsonSchema(schemaNode);
         } catch (Exception ex) {
             logger.error("Failed to load json schema!", ex);
             throw new JsonSchemaException(ex);
@@ -75,10 +67,10 @@ public class JsonSchemaFactory {
             JsonElement schemaNode = new JsonParser().parse(reader);
 
             if (this.idMatchesSourceUrl(schemaNode, schemaURL)) {
-                return new JsonSchema(mapper, schemaNode, null);
+                return new JsonSchema(schemaNode, null);
             }
 
-            return new JsonSchema(mapper, schemaNode);
+            return new JsonSchema(schemaNode);
 
         } catch (IOException ioe) {
             logger.error("Failed to load json schema!", ioe);
@@ -87,7 +79,7 @@ public class JsonSchemaFactory {
     }
 
     public JsonSchema getSchema(JsonElement jsonNode) {
-        return new JsonSchema(mapper, jsonNode);
+        return new JsonSchema(jsonNode);
     }
 
     private boolean idMatchesSourceUrl(JsonElement schema, URL schemaUrl) {

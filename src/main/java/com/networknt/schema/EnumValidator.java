@@ -21,7 +21,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,9 +33,9 @@ public class EnumValidator extends BaseJsonValidator implements JsonValidator {
     private List<JsonElement> nodes;
     private String error;
 
-    public EnumValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
+    public EnumValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.ENUM);
-        nodes = new ArrayList<JsonElement>();
+        nodes = new ArrayList<>();
         error = "[none]";
 
         if (schemaNode != null && schemaNode.isJsonArray()) {
@@ -55,7 +54,7 @@ public class EnumValidator extends BaseJsonValidator implements JsonValidator {
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
+        Set<ValidationMessage> errors = new HashSet<>();
 
         if (!nodes.contains(node)) {
             errors.add(buildValidationMessage(at, error));

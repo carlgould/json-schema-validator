@@ -16,13 +16,12 @@
 
 package com.networknt.schema;
 
-import com.google.gson.JsonElement;
-import com.google.gson.Gson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashSet;
 import java.util.Set;
+
+import com.google.gson.JsonElement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MinimumValidator extends BaseJsonValidator implements JsonValidator {
     private static final Logger logger = LoggerFactory.getLogger(MinimumValidator.class);
@@ -31,7 +30,7 @@ public class MinimumValidator extends BaseJsonValidator implements JsonValidator
     private double minimum;
     private boolean excluded = false;
 
-    public MinimumValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
+    public MinimumValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.MINIMUM);
         if (schemaNode.isJsonPrimitive() && schemaNode.getAsJsonPrimitive().isNumber()) {
             minimum = schemaNode.getAsJsonPrimitive().getAsNumber().doubleValue();
@@ -51,7 +50,7 @@ public class MinimumValidator extends BaseJsonValidator implements JsonValidator
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
+        Set<ValidationMessage> errors = new HashSet<>();
 
         if (!(node.isJsonPrimitive() && node.getAsJsonPrimitive().isNumber())) {
             // minimum only applies to numbers

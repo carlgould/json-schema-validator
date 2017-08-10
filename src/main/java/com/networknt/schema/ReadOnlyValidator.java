@@ -35,10 +35,9 @@ public class ReadOnlyValidator extends BaseJsonValidator implements JsonValidato
 
     private List<String> fieldNames = new ArrayList<String>();
 
-    public ReadOnlyValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
+    public ReadOnlyValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.READ_ONLY);
         if (schemaNode.isJsonArray()) {
-            int size = schemaNode.getAsJsonArray().size();
             for (JsonElement element : schemaNode.getAsJsonArray()) {
                 fieldNames.add(asText(element));
             }
@@ -50,7 +49,7 @@ public class ReadOnlyValidator extends BaseJsonValidator implements JsonValidato
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
+        Set<ValidationMessage> errors = new HashSet<>();
 
         for (String fieldName : fieldNames) {
             JsonElement propertyNode = node.getAsJsonObject().get(fieldName);
@@ -79,15 +78,15 @@ public class ReadOnlyValidator extends BaseJsonValidator implements JsonValidato
 
         String[] parts = path.split("\\.");
         JsonObject result = null;
-        for (int i = 0; i < parts.length; i++) {
-            if (parts[i].contains("[")) {
-                int idx1 = parts[i].indexOf("[");
-                int idx2 = parts[i].indexOf("]");
-                String key = parts[i].substring(0, idx1).trim();
-                int idx = Integer.parseInt(parts[i].substring(idx1 + 1, idx2).trim());
+        for (String part : parts) {
+            if (part.contains("[")) {
+                int idx1 = part.indexOf("[");
+                int idx2 = part.indexOf("]");
+                String key = part.substring(0, idx1).trim();
+                int idx = Integer.parseInt(part.substring(idx1 + 1, idx2).trim());
                 result = data.get(key).getAsJsonArray().get(idx).getAsJsonObject();
             } else {
-                result = data.get(parts[i]).getAsJsonObject();
+                result = data.get(part).getAsJsonObject();
             }
             if (result == null) {
                 break;

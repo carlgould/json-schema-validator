@@ -66,7 +66,7 @@ public enum ValidatorTypeCode {
     private final MessageFormat messageFormat;
     private final String errorCodeKey;
 
-    private ValidatorTypeCode(String value, String errorCode, MessageFormat messageFormat) {
+    ValidatorTypeCode(String value, String errorCode, MessageFormat messageFormat) {
         this.value = value;
         this.errorCode = errorCode;
         this.messageFormat = messageFormat;

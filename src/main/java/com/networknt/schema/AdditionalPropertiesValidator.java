@@ -23,7 +23,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.slf4j.Logger;
@@ -37,8 +36,7 @@ public class AdditionalPropertiesValidator extends BaseJsonValidator implements 
     private Set<String> allowedProperties = new HashSet<String>();
     private List<Pattern> patternProperties = new ArrayList<Pattern>();
 
-    public AdditionalPropertiesValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema,
-                                         Gson mapper) {
+    public AdditionalPropertiesValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.ADDITIONAL_PROPERTIES);
         allowAdditionalProperties = false;
         if (isBoolean(schemaNode)) {
@@ -47,7 +45,7 @@ public class AdditionalPropertiesValidator extends BaseJsonValidator implements 
         if (schemaNode.isJsonObject()) {
             allowAdditionalProperties = true;
             additionalPropertiesSchema =
-                new JsonSchema(mapper, getValidatorType().getValue(), schemaNode, parentSchema);
+                new JsonSchema(getValidatorType().getValue(), schemaNode, parentSchema);
         }
 
         JsonObject parentSchemaObj = parentSchema.getSchemaNode().getAsJsonObject();
@@ -70,7 +68,7 @@ public class AdditionalPropertiesValidator extends BaseJsonValidator implements 
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         if (logger.isDebugEnabled()) debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
+        Set<ValidationMessage> errors = new HashSet<>();
         if (!node.isJsonObject()) {
             // ignore no object
             return errors;

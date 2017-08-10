@@ -16,22 +16,21 @@
 
 package com.networknt.schema;
 
-import com.google.gson.JsonElement;
-import com.google.gson.Gson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashSet;
 import java.util.Set;
+
+import com.google.gson.JsonElement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NotValidator extends BaseJsonValidator implements JsonValidator {
     private static final Logger logger = LoggerFactory.getLogger(RequiredValidator.class);
 
     private JsonSchema schema;
 
-    public NotValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
+    public NotValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.NOT);
-        schema = new JsonSchema(mapper, getValidatorType().getValue(), schemaNode, parentSchema);
+        schema = new JsonSchema(getValidatorType().getValue(), schemaNode, parentSchema);
 
         parseErrorCode(getValidatorType().getErrorCodeKey());
     }
@@ -39,7 +38,7 @@ public class NotValidator extends BaseJsonValidator implements JsonValidator {
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> notValidationError = new HashSet<ValidationMessage>();
+        Set<ValidationMessage> notValidationError = new HashSet<>();
         Set<ValidationMessage> errors = schema.validate(node, rootNode, at);
         if (errors.isEmpty()) {
             notValidationError.add(buildValidationMessage(at, schema.toString()));

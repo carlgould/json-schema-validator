@@ -29,7 +29,7 @@ public class UniqueItemsValidator extends BaseJsonValidator implements JsonValid
 
     private boolean unique = false;
 
-    public UniqueItemsValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
+    public UniqueItemsValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.UNIQUE_ITEMS);
         if (isBoolean(schemaNode)) {
             unique = schemaNode.getAsJsonPrimitive().getAsBoolean();
@@ -41,10 +41,10 @@ public class UniqueItemsValidator extends BaseJsonValidator implements JsonValid
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> errors = new HashSet<ValidationMessage>();
+        Set<ValidationMessage> errors = new HashSet<>();
 
         if (unique && node.isJsonArray()) {
-            Set<JsonElement> set = new HashSet<JsonElement>();
+            Set<JsonElement> set = new HashSet<>();
             for (JsonElement n : node.getAsJsonArray()) {
                 set.add(n);
             }

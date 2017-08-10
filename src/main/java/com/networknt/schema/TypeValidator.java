@@ -31,12 +31,12 @@ public class TypeValidator extends BaseJsonValidator implements JsonValidator {
     private JsonType schemaType;
     private UnionTypeValidator unionTypeValidator;
 
-    public TypeValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
+    public TypeValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.TYPE);
         schemaType = TypeFactory.getSchemaNodeType(schemaNode);
 
         if (schemaType == JsonType.UNION) {
-            unionTypeValidator = new UnionTypeValidator(schemaPath, schemaNode, parentSchema, mapper);
+            unionTypeValidator = new UnionTypeValidator(schemaPath, schemaNode, parentSchema);
         }
 
         parseErrorCode(getValidatorType().getErrorCodeKey());

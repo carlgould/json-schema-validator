@@ -16,16 +16,16 @@
 
 package com.networknt.schema;
 
-import com.google.gson.JsonElement;
-import com.google.gson.Gson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import com.google.gson.JsonElement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RefValidator extends BaseJsonValidator implements JsonValidator {
     private static final Logger logger = LoggerFactory.getLogger(RefValidator.class);
@@ -36,7 +36,7 @@ public class RefValidator extends BaseJsonValidator implements JsonValidator {
     private final String REF_CURRENT = "#";
     private final String REF_RELATIVE = "../";
 
-    public RefValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
+    public RefValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema) {
 
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.REF);
         String refValue = asText(schemaNode);
@@ -51,7 +51,7 @@ public class RefValidator extends BaseJsonValidator implements JsonValidator {
         		schemaUrl = obtainAbsolutePath(parentSchema, schemaUrl);
         	}
             
-            JsonSchemaFactory factory = new JsonSchemaFactory(mapper);
+            JsonSchemaFactory factory = new JsonSchemaFactory();
             try {
                 URL url = new URL(schemaUrl);
                 parentSchema = factory.getSchema(url);
@@ -70,7 +70,7 @@ public class RefValidator extends BaseJsonValidator implements JsonValidator {
         } else {
             JsonElement node = parentSchema.getRefSchemaNode(refValue);
             if (node != null) {
-                schema = new JsonSchema(mapper, refValue, node, parentSchema);
+                schema = new JsonSchema(refValue, node, parentSchema);
             }
         }
     }
@@ -112,7 +112,7 @@ public class RefValidator extends BaseJsonValidator implements JsonValidator {
         if (schema != null) {
             return schema.validate(node, rootNode, at);
         } else {
-            return new HashSet<ValidationMessage>();
+            return Collections.emptySet();
         }
     }
 

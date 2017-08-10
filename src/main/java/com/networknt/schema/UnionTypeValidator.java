@@ -18,6 +18,7 @@ package com.networknt.schema;
 
 import com.google.gson.JsonElement;
 import com.google.gson.Gson;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,12 +33,10 @@ public class UnionTypeValidator extends BaseJsonValidator implements JsonValidat
     private List<JsonValidator> schemas;
     private String error;
 
-    public UnionTypeValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
+    public UnionTypeValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.UNION_TYPE);
-        schemas = new ArrayList<JsonValidator>();
-        String sep = "";
-        StringBuilder error = new StringBuilder();
-        error.append("[");
+        schemas = new ArrayList<>();
+        List<String> errorList = new ArrayList<>();
 
         if (!schemaNode.isJsonArray()) {
             throw new JsonSchemaException("Expected array for type property on Union Type Definition.");
@@ -46,20 +45,18 @@ public class UnionTypeValidator extends BaseJsonValidator implements JsonValidat
         int i = 0;
         for (JsonElement n : schemaNode.getAsJsonArray()) {
             JsonType t = TypeFactory.getSchemaNodeType(n);
-            error.append(sep).append(t);
-            sep = ", ";
+            errorList.add(t.toString());
 
             if (n.isJsonObject()) {
-                schemas.add(new JsonSchema(mapper, ValidatorTypeCode.TYPE.getValue(), n, parentSchema));
+                schemas.add(new JsonSchema(ValidatorTypeCode.TYPE.getValue(), n, parentSchema));
             } else {
-                schemas.add(new TypeValidator(schemaPath + "/" + i, n, parentSchema, mapper));
+                schemas.add(new TypeValidator(schemaPath + "/" + i, n, parentSchema));
             }
 
             i++;
         }
 
-        error.append("]");
-        this.error = error.toString();
+        this.error = "[" + StringUtils.join(errorList, ", ") + "]";
     }
 
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
@@ -67,7 +64,7 @@ public class UnionTypeValidator extends BaseJsonValidator implements JsonValidat
 
         JsonType nodeType = TypeFactory.getValueNodeType(node);
 
-        Set<ValidationMessage> _return = new HashSet<ValidationMessage>();
+        Set<ValidationMessage> _return = new HashSet<>();
         boolean valid = false;
 
         for (JsonValidator schema : schemas) {

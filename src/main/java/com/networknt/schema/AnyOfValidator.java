@@ -31,17 +31,17 @@ public class AnyOfValidator extends BaseJsonValidator implements JsonValidator {
 
     private List<JsonSchema> schemas = new ArrayList<JsonSchema>();
 
-    public AnyOfValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema, Gson mapper) {
+    public AnyOfValidator(String schemaPath, JsonElement schemaNode, JsonSchema parentSchema) {
         super(schemaPath, schemaNode, parentSchema, ValidatorTypeCode.ANY_OF);
         for (JsonElement subSchema : schemaNode.getAsJsonArray()) {
-            schemas.add(new JsonSchema(mapper, getValidatorType().getValue(), subSchema, parentSchema));
+            schemas.add(new JsonSchema(getValidatorType().getValue(), subSchema, parentSchema));
         }
     }
 
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> allErrors = new HashSet<ValidationMessage>();
+        Set<ValidationMessage> allErrors = new HashSet<>();
 
         for (JsonSchema schema : schemas) {
             Set<ValidationMessage> errors = schema.validate(node, rootNode, at);

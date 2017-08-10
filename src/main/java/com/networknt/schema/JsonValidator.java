@@ -24,7 +24,7 @@ import com.google.gson.JsonElement;
  * Standard json validator interface, implemented by all validators and JsonSchema.
  */
 public interface JsonValidator {
-    public static final String AT_ROOT = "$";
+    String AT_ROOT = "$";
 
     /**
      * Validate the given root JsonElement, starting at the root of the data path.
