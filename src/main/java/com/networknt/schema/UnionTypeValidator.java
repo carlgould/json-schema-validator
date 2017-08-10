@@ -16,16 +16,15 @@
 
 package com.networknt.schema;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
 import com.google.gson.JsonElement;
-import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class UnionTypeValidator extends BaseJsonValidator implements JsonValidator {
     private static final Logger logger = LoggerFactory.getLogger(UnionTypeValidator.class);
@@ -64,7 +63,6 @@ public class UnionTypeValidator extends BaseJsonValidator implements JsonValidat
 
         JsonType nodeType = TypeFactory.getValueNodeType(node);
 
-        Set<ValidationMessage> _return = new HashSet<>();
         boolean valid = false;
 
         for (JsonValidator schema : schemas) {
@@ -76,10 +74,10 @@ public class UnionTypeValidator extends BaseJsonValidator implements JsonValidat
         }
 
         if (!valid) {
-            _return.add(buildValidationMessage(at, nodeType.toString(), error));
+            return Collections.singleton(buildValidationMessage(at, nodeType.toString(), error));
+        } else {
+            return Collections.emptySet();
         }
-
-        return _return;
     }
 
 }

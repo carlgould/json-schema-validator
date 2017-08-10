@@ -16,6 +16,7 @@
 
 package com.networknt.schema;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -40,15 +41,11 @@ public class MaxItemsValidator extends BaseJsonValidator implements JsonValidato
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> errors = new HashSet<>();
-
-        if (node.isJsonArray()) {
-            if (node.getAsJsonArray().size() > max) {
-                errors.add(buildValidationMessage(at, "" + max));
-            }
+        if (node.isJsonArray() && node.getAsJsonArray().size() > max) {
+            return Collections.singleton(buildValidationMessage(at, "" + max));
         }
 
-        return errors;
+        return Collections.emptySet();
     }
 
 }

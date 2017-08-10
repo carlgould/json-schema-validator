@@ -16,7 +16,7 @@
 
 package com.networknt.schema;
 
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 
 import com.google.gson.JsonElement;
@@ -52,18 +52,17 @@ public class MaximumValidator extends BaseJsonValidator implements JsonValidator
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> errors = new HashSet<>();
-
         if (!isNumber(node)) {
             // maximum only applies to numbers
-            return errors;
+            return Collections.emptySet();
         }
 
         double value = doubleValue(node);
         if (greaterThan(value, maximum) || (excludeEqual && equals(value, maximum))) {
-            errors.add(buildValidationMessage(at, "" + maximum));
+            return Collections.singleton(buildValidationMessage(at, "" + maximum));
+        } else {
+            return Collections.emptySet();
         }
-        return errors;
     }
 
 }

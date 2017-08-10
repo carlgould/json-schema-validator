@@ -16,7 +16,7 @@
 
 package com.networknt.schema;
 
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 
 import com.google.gson.JsonElement;
@@ -42,17 +42,17 @@ public class MaxLengthValidator extends BaseJsonValidator implements JsonValidat
         debug(logger, node, rootNode, at);
 
         JsonType nodeType = TypeFactory.getValueNodeType(node);
-        Set<ValidationMessage> errors = new HashSet<>();
         if (nodeType != JsonType.STRING) {
             // ignore no-string typs
-            return errors;
+            return Collections.emptySet();
         }
 
         String textValue = asText(node);
         if (textValue.codePointCount(0, textValue.length()) > maxLength) {
-            errors.add(buildValidationMessage(at, "" + maxLength));
+            return Collections.singleton(buildValidationMessage(at, "" + maxLength));
+        } else {
+            return Collections.emptySet();
         }
-        return errors;
     }
 
 }

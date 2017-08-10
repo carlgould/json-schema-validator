@@ -17,6 +17,7 @@
 package com.networknt.schema;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -45,15 +46,16 @@ public class RequiredValidator extends BaseJsonValidator implements JsonValidato
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> errors = new HashSet<>();
+        Set<ValidationMessage> errors = null;
 
         for (String fieldName : fieldNames) {
             if (!node.getAsJsonObject().has(fieldName)) {
+                if (errors == null) errors = new HashSet<>();
                 errors.add(buildValidationMessage(at, fieldName));
             }
         }
 
-        return errors;
+        return errors == null ? Collections.emptySet() : errors;
     }
 
 }

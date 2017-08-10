@@ -16,7 +16,7 @@
 
 package com.networknt.schema;
 
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 
 import com.google.gson.JsonElement;
@@ -40,15 +40,11 @@ public class MaxPropertiesValidator extends BaseJsonValidator implements JsonVal
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> errors = new HashSet<>();
-
-        if (node.isJsonObject()) {
-            if (node.getAsJsonObject().size() > max) {
-                errors.add(buildValidationMessage(at, "" + max));
-            }
+        if (node.isJsonObject() && node.getAsJsonObject().size() > max) {
+            return Collections.singleton(buildValidationMessage(at, "" + max));
+        } else {
+            return Collections.emptySet();
         }
-
-        return errors;
     }
 
 }

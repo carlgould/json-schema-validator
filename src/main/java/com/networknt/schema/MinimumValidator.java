@@ -16,7 +16,7 @@
 
 package com.networknt.schema;
 
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 
 import com.google.gson.JsonElement;
@@ -50,18 +50,17 @@ public class MinimumValidator extends BaseJsonValidator implements JsonValidator
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> errors = new HashSet<>();
-
         if (!(node.isJsonPrimitive() && node.getAsJsonPrimitive().isNumber())) {
             // minimum only applies to numbers
-            return errors;
+            return Collections.emptySet();
         }
 
         double value = node.getAsJsonPrimitive().getAsNumber().doubleValue();
         if (lessThan(value, minimum) || (excluded && equals(value, minimum))) {
-            errors.add(buildValidationMessage(at, "" + minimum));
+            return Collections.singleton(buildValidationMessage(at, "" + minimum));
+        } else {
+            return Collections.emptySet();
         }
-        return errors;
     }
 
 }

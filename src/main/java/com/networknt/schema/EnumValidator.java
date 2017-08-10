@@ -17,6 +17,7 @@
 package com.networknt.schema;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -54,13 +55,11 @@ public class EnumValidator extends BaseJsonValidator implements JsonValidator {
     public Set<ValidationMessage> validate(JsonElement node, JsonElement rootNode, String at) {
         debug(logger, node, rootNode, at);
 
-        Set<ValidationMessage> errors = new HashSet<>();
-
         if (!nodes.contains(node)) {
-            errors.add(buildValidationMessage(at, error));
+            return Collections.singleton(buildValidationMessage(at, error));
+        } else {
+            return Collections.emptySet();
         }
-
-        return errors;
     }
 
 }
